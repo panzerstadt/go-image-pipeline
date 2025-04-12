@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package image_pipeline;
+option go_package = "./pb";
+
+message ResizeTask {
+    string image_id = 1;
+    string path = 2;
+    bool resize = 3;
+    bool progressive = 4;
+}
+
+// protoc --go_out=. proto/resize.proto
