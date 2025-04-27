@@ -1,3 +1,4 @@
+local: go run ./cmd/dev
 producer: go run ./cmd/producer
 consumer: go run ./cmd/consumer
 kafka: docker compose up
