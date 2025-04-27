@@ -25,6 +25,7 @@ type ResizeTask struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ImageId       string                 `protobuf:"bytes,1,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
 	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	Dir           string                 `protobuf:"bytes,5,opt,name=dir,proto3" json:"dir,omitempty"`
 	Resize        bool                   `protobuf:"varint,3,opt,name=resize,proto3" json:"resize,omitempty"`
 	Progressive   bool                   `protobuf:"varint,4,opt,name=progressive,proto3" json:"progressive,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -75,6 +76,13 @@ func (x *ResizeTask) GetPath() string {
 	return ""
 }
 
+func (x *ResizeTask) GetDir() string {
+	if x != nil {
+		return x.Dir
+	}
+	return ""
+}
+
 func (x *ResizeTask) GetResize() bool {
 	if x != nil {
 		return x.Resize
@@ -93,11 +101,12 @@ var File_proto_resize_proto protoreflect.FileDescriptor
 
 const file_proto_resize_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/resize.proto\x12\x0eimage_pipeline\"u\n" +
+	"\x12proto/resize.proto\x12\x0eimage_pipeline\"\x87\x01\n" +
 	"\n" +
 	"ResizeTask\x12\x19\n" +
 	"\bimage_id\x18\x01 \x01(\tR\aimageId\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\x12\x16\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x12\x10\n" +
+	"\x03dir\x18\x05 \x01(\tR\x03dir\x12\x16\n" +
 	"\x06resize\x18\x03 \x01(\bR\x06resize\x12 \n" +
 	"\vprogressive\x18\x04 \x01(\bR\vprogressiveB\x06Z\x04./pbb\x06proto3"
 

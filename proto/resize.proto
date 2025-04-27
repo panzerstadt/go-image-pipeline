@@ -6,6 +6,7 @@ option go_package = "./pb";
 message ResizeTask {
     string image_id = 1;
     string path = 2;
+    string dir = 5;
     bool resize = 3;
     bool progressive = 4;
 }
