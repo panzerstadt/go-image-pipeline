@@ -59,6 +59,7 @@ func prepareMessageForTopic(topic string, id string, dir string, filename string
 
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
+		// Key: sarama.StringEncoder(), // this can be used to set which partitions the message goes to (e.g. by user)
 		Value: sarama.ByteEncoder(resizeTask(id, dir, filename)),
 	}
 

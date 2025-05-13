@@ -25,6 +25,23 @@ ui: localhost:8080
 
   - when you stop kafka, make sure you stop the consumers too. otherwise they don't get assigned to partitions properly somehow
 
+### producing messages with custom partition keys
+
+```
+msg := &sarama.ProducerMessage{
+    Topic: "your-topic",
+    Key:   sarama.StringEncoder("user123"), // This determines the partition
+    Value: sarama.StringEncoder("some image job payload"),
+}
+
+partition, offset, err := producer.SendMessage(msg)
+if err != nil {
+    log.Fatalf("failed to send message: %v", err)
+}
+
+log.Printf("Message sent to partition %d at offset %d", partition, offset)
+```
+
 TODO:
 
 - create a new consumer group -> maybe notifications
