@@ -44,7 +44,95 @@ log.Printf("Message sent to partition %d at offset %d", partition, offset)
 
 TODO:
 
-- create a new consumer group -> maybe notifications
-- find out what else can kafka do that is worth exploring
-- maybe try big loads
-- how do i DDD? the encapsulation of items -> ask chatgpt
+#### create a new consumer group -> maybe notifications
+
+Try this:
+• Reuse the same topic
+• Spin up a new consumer group (e.g., notification-worker)
+• It should receive all messages from offset 0, even if your image-processing group already did
+• This simulates a fan-out architecture
+
+#### find out what else can kafka do that is worth exploring
+
+Here are some spicy ideas:
+• Dead Letter Queues (DLQs) – catch poison messages that keep failing
+• Delayed delivery via scheduled retries (not native, but doable with workarounds)
+• Stream processing using something like Kafka Streams or Faust (Python)
+• Log compaction vs normal retention
+• Message headers for metadata transport
+
+#### maybe try big loads
+
+Goal: Stress test for throughput and backpressure
+
+Try this:
+• Bulk-produce 10,000+ messages quickly
+• Monitor how your consumers handle lag (check ConsumerLag via Kafka UI or metrics)
+• Optional: add artificial delay in consumer to simulate heavy processing
+
+#### how do i DDD? the encapsulation of items -> ask chatgpt
+
+This is a big one. At a high level:
+• Entities: Have identity (e.g., ImageJob) and mutable state
+• Value Objects: No identity, just data (e.g., Resolution, Dimensions)
+• Aggregates: Cluster of objects treated as a unit (e.g., an ImageProcessingWorkflow)
+• Repositories: Abstract away data access
+• Services: Contain business logic that spans multiple aggregates
+
+For your image pipeline, you might:
+• Turn a ResizeJob into an aggregate
+• Have JobStatus as a value object
+• Use a repository interface to load/save job data (e.g., from Kafka state, S3, or DB)
+
+💡 Breakdown
+• imagejob: your domain model—aggregates, value objects, behavior
+• processing: application layer—services that orchestrate the domain
+• repository: infrastructure layer—Kafka or FS adapters for persistence
+• cmd: executables (Go’s standard approach)
+• internal: keeps implementation details encapsulated, Go idiomatic
+
+```
+go-image-pipeline/
+├── cmd/
+│   ├── consumer/               # Entry point for consumer service
+│   ├── producer/               # Entry point for producer
+│   └── dev/                    # Dev/testing runner
+├── internal/
+│   ├── imagejob/               # Aggregate: ResizeJob, JobState transitions
+│   │   ├── job.go              # Entity definition (ID, state, etc.)
+│   │   └── status.go           # Value object: JobStatus, e.g. Pending, Done
+│   ├── processing/             # Service: contains business logic (e.g., ResizeImage)
+│   │   └── service.go
+│   ├── repository/             # Interfaces and adapters for persistence
+│   │   ├── interface.go        # Repository interfaces
+│   │   ├── kafka_repo.go       # Implementation: writes/reads from Kafka
+│   │   └── fs_repo.go          # (Optional) Implementation: reads from local FS
+│   └── shared/                 # Utilities, domain-wide constants, error types
+│       └── logger.go
+├── proto/                      # Protobuf definitions
+├── ui/                         # Optional: frontend or dashboard
+├── scripts/                    # Local tooling, CLI commands
+├── README.md
+└── go.mod
+```
+
+#### DDD
+
+✅ 3. Separate domain logic from coordination + plumbing
+• Domain logic: rules, decisions, calculations
+• Application logic: orchestration, calling services, scheduling
+• Infrastructure: Kafka, DB, HTTP, Docker, etc.
+
+For instance:
+• The rule “only resize images wider than 800px” → domain
+• The act of pulling that job from Kafka → infra
+
+#### domain: Image Processing Workflow Management
+
+Which means your domain model includes:
+• Jobs (entities)
+• Status/state transitions (value objects or enums)
+• Dimensions, file types (value objects)
+• Processing decisions and constraints (business rules)
+
+Everything else—how you send a job through Kafka, where you store images, even the UI—is supporting infrastructure.
