@@ -50,7 +50,7 @@ func scanFolder(dir string) (filenames []string) {
 	return filenames
 }
 
-func prepare(id string, dir string, filename string) *sarama.ProducerMessage {
+func prepareMessageForTopic(topic string, id string, dir string, filename string) *sarama.ProducerMessage {
 	fullpath := path.Join(dir, filename)
 	_, err := os.Stat(fullpath)
 	if err != nil {
@@ -58,7 +58,7 @@ func prepare(id string, dir string, filename string) *sarama.ProducerMessage {
 	}
 
 	msg := &sarama.ProducerMessage{
-		Topic: configs.TestTopic,
+		Topic: topic,
 		Value: sarama.ByteEncoder(resizeTask(id, dir, filename)),
 	}
 

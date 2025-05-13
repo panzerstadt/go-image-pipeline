@@ -10,7 +10,7 @@ import (
 
 func get_consumer() sarama.ConsumerGroup {
 	config := sarama.NewConfig()
-	config.Version = sarama.MaxVersion
+	config.Version = configs.SaramaVersion
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 	config.Consumer.Offsets.AutoCommit.Enable = true // remove immediately when i receive it
 	config.Consumer.Offsets.AutoCommit.Interval = 1 * time.Second

@@ -15,8 +15,14 @@ type model struct {
 
 func initialModel() model {
 	return model{
-		choices: []string{"Run Producer", "Run Consumer", "Test Imagemagick", "Exit"},
-		cursor:  0,
+		choices: []string{
+			"Run Producer",
+			"Run Consumer",
+			"Test Imagemagick",
+			"Create Kafka Topic: 'Test Topic'",
+			"Remove Kafka Topic: 'Test Topic'",
+			"Exit"},
+		cursor: 0,
 	}
 }
 
@@ -49,6 +55,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				outPath := "./outputs/test.jpg"
 				runCommand("/opt/homebrew/bin/convert", "-strip", "-interlace", "Plane", "-quality", "80", "-resize", "2000x2000", middlePath, outPath)
 			case 3:
+				create_topic()
+			case 4:
+				remove_topic()
+			case 5:
 				return m, tea.Quit
 			}
 		}

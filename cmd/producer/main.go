@@ -19,8 +19,7 @@ func main() {
 		filenames := scanFolder(configs.InputDir)
 		// 2. loop through all files in folder and prepare message
 		for id, filename := range filenames {
-			msg := prepare(fmt.Sprintf("%v", id), configs.InputDir, filename)
-			fmt.Println(msg)
+			msg := prepareMessageForTopic(configs.TestTopic, fmt.Sprintf("%v", id), configs.InputDir, filename)
 			partition, offset, err := producer.SendMessage(msg)
 			if err != nil {
 				log.Printf("Failed to send message: %v", err)
