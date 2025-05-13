@@ -136,3 +136,48 @@ Which means your domain model includes:
 • Processing decisions and constraints (business rules)
 
 Everything else—how you send a job through Kafka, where you store images, even the UI—is supporting infrastructure.
+
+### DDD
+
+- if the domain is about image processing workflow mgmt
+- then the domain object is not the jpeg, but the imageJob
+
+📚 Core DDD Vocabulary
+
+These are terms you’ll see in DDD-oriented systems:
+
+🧱 Domain Layer
+• Entity – has identity (e.g. ImageJob, User)
+• Value Object – no identity, immutable (e.g. Dimensions, Resolution)
+• Aggregate – cluster of entities/VOs with rules (e.g. ResizeJob with status and constraints)
+• Domain Service – stateless service with domain logic across multiple entities (e.g. JobScheduler)
+• Domain Event – something that happened in the domain (e.g. ImageResizedEvent)
+
+🧩 Application Layer
+• Application Service / Use Case – orchestrates domain behavior (e.g. ProcessImageUseCase)
+• Command – request to perform an action (e.g. ResizeImageCommand)
+• Query – read model request
+• DTO – data transfer object (input/output, not a domain model)
+
+📦 Infrastructure Layer
+• Repository – access to domain objects (e.g. Kafka, FS, DB)
+• Adapter – a plug-in that conforms to interface (e.g. KafkaProducerAdapter)
+• Gateway – external service abstraction (e.g. S3Client)
+
+### MVC <-> DDD
+
+| Common Term | DDD Equivalent (ish)                           |
+| ----------- | ---------------------------------------------- |
+| Model       | Often includes Entities + Value Objects        |
+| Repository  | Same in DDD                                    |
+| Service     | Could be Domain Service or Application Service |
+| Controller  | UI/Application Layer Entry Point               |
+
+### 🔍 Tips to Recognize DDD-style Structure
+
+Look for:
+• Entity + Value Object split
+• Interfaces for repositories
+• UseCase or CommandHandler classes/files
+• Language like Domain, Aggregate, Event
+• Folders like domain, application, infrastructure, interfaces
