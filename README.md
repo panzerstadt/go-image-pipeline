@@ -42,8 +42,6 @@ if err != nil {
 log.Printf("Message sent to partition %d at offset %d", partition, offset)
 ```
 
-TODO:
-
 #### create a new consumer group -> maybe notifications
 
 Try this:
@@ -51,6 +49,8 @@ Try this:
 • Spin up a new consumer group (e.g., notification-worker) and analytics worker
 • It should receive all messages from offset 0, even if your image-processing group already did
 • This simulates a fan-out architecture
+
+TODO:
 
 #### find out what else can kafka do that is worth exploring
 

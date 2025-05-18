@@ -83,3 +83,5 @@ We have started processing the filename  000005.jpg
 We have started processing the filename  test.jpg
 We have started processing the filename  000007.jpg
 We have started processing the filename  000010.jpg
+We have started processing the filename  000001.jpg
+We have started processing the filename  test.JPG
