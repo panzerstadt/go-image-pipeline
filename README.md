@@ -48,7 +48,7 @@ TODO:
 
 Try this:
 • Reuse the same topic
-• Spin up a new consumer group (e.g., notification-worker)
+• Spin up a new consumer group (e.g., notification-worker) and analytics worker
 • It should receive all messages from offset 0, even if your image-processing group already did
 • This simulates a fan-out architecture
 

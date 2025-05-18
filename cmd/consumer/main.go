@@ -2,50 +2,35 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"math/rand/v2"
 	"os"
-	"os/exec"
 	"os/signal"
-	"path"
 	"sync"
-	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/panzerstadt/go-image-pipeline/cmd/consumer/handlers"
 	"github.com/panzerstadt/go-image-pipeline/configs"
 )
 
-func randDuration(min, max int) time.Duration {
-	randNumber := rand.IntN(max-min+1) + min
-	return time.Duration(randNumber) * time.Second
-}
-
 func main() {
-	consumer := get_consumer()
-	defer consumer.Close()
+	imageProcessorConsumer := make_consumer_for_consumer_group(configs.ConsumerGroupImageProcessor)
+	defer imageProcessorConsumer.Close()
+
+	// shard for now. TODO: start my own consumer separately
+	notificationsConsumer := make_consumer_for_consumer_group(configs.ConsumerGroupNotifications)
+	defer notificationsConsumer.Close()
+
+	analyticsConsumer := make_consumer_for_consumer_group(configs.ConsumerGroupAnalytics)
+	defer analyticsConsumer.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		for {
-			err := consumer.Consume(ctx, []string{configs.TestTopic}, &consumerHandler{})
-			if err != nil {
-				log.Printf("consume error: %v", err)
-			}
-			if ctx.Err() != nil {
-				return
-			}
-
-		}
-	}()
+	startConsumer(&wg, ctx, notificationsConsumer, configs.TopicImageJobs, &handlers.NotificationsProcessor{})
+	startConsumer(&wg, ctx, imageProcessorConsumer, configs.TopicImageJobs, &handlers.ImageProcessor{})
+	startConsumer(&wg, ctx, analyticsConsumer, configs.TopicImageJobs, &handlers.AnalyticsProcessor{})
 
 	<-signals
 	log.Println("shutting down")
@@ -53,52 +38,20 @@ func main() {
 	wg.Wait()
 }
 
-type consumerHandler struct{}
+func startConsumer(wg *sync.WaitGroup, ctx context.Context, consumer sarama.ConsumerGroup, topic string, handler sarama.ConsumerGroupHandler) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-func (h *consumerHandler) Setup(sarama.ConsumerGroupSession) error {
-	return nil
-}
+		for {
+			err := consumer.Consume(ctx, []string{topic}, handler)
+			if err != nil {
+				log.Printf("consumer error: %v", err)
+			}
+			if ctx.Err() != nil {
+				return
+			}
 
-func (h *consumerHandler) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		time.Sleep(randDuration(1, 3))
-		fmt.Printf("Received message: key=%s, value=%s, partition=%d, offset=%d\n", string(msg.Key), string(msg.Value), msg.Partition, msg.Offset)
-		task := receive(msg)
-		filename := task.Path
-
-		// 2. resize image and make progressive jpeg
-		//      - err: non-retryable
-		middlePath := path.Join(configs.IntermediateDir, filename)
-		_, err := os.Stat(middlePath)
-		if err != nil {
-			fmt.Println("file not found at: ", middlePath)
-			sess.MarkMessage(msg, "file not found at: "+middlePath)
-			break
 		}
-		outPath := path.Join(configs.OutputDir, filename)
-		// 	/opt/homebrew/bin/convert -strip -interlace Plane -quality 80 -resize 2000x2000 $f $o
-		// todo: fully in go?
-		cmd := exec.Command("/opt/homebrew/bin/convert", "-strip", "-interlace", "Plane", "-quality", "80", "-resize", "2000x2000", middlePath, outPath)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			sess.MarkMessage(msg, "image processing failed for: "+middlePath)
-			break
-		}
-		fmt.Println("imagemagick process output: " + string(output))
-		// 2b. call llm to guess and fill in jpeg metadata
-		//      - err: retryable
-		//      - stub: wait 5 seconds
-		fmt.Println("sleeping for 5 seconds...")
-		time.Sleep(time.Second * 5)
-		// 3. save output to /outputs
-		//      - err: non-retryable
-		// save(configs.OutputDir+filename, []byte{})
-		sess.MarkMessage(msg, "")
-	}
-	return nil
+	}()
 }

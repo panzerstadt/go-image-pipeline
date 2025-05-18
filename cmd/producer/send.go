@@ -9,25 +9,8 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/panzerstadt/go-image-pipeline/configs"
-	"github.com/panzerstadt/go-image-pipeline/pb"
 	"github.com/panzerstadt/go-image-pipeline/shared"
-	"google.golang.org/protobuf/proto"
 )
-
-func resizeTask(id string, dir string, path string) []byte {
-	task := &pb.ResizeTask{
-		ImageId:     id,
-		Path:        path,
-		Dir:         dir,
-		Resize:      true,
-		Progressive: true,
-	}
-	data, err := proto.Marshal(task)
-	if err != nil {
-		log.Fatal("can't open file")
-	}
-	return data
-}
 
 func scanFolder(dir string) (filenames []string) {
 	fmt.Println("scanning directory: " + dir)
@@ -60,7 +43,7 @@ func prepareMessageForTopic(topic string, id string, dir string, filename string
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
 		// Key: sarama.StringEncoder(), // this can be used to set which partitions the message goes to (e.g. by user)
-		Value: sarama.ByteEncoder(resizeTask(id, dir, filename)),
+		Value: sarama.ByteEncoder(shared.MakeResizeTask(id, dir, filename)),
 	}
 
 	return msg
@@ -74,7 +57,7 @@ func moveToIntermediateDirAndMarkSent(dir string, filename string) {
 	}
 
 	midPath := path.Join(configs.IntermediateDir, filename)
-	err = shared.Copy(srcPath, midPath)
+	err = shared.FileCopy(srcPath, midPath)
 	fmt.Println(srcPath + " copied to " + midPath)
 	if err != nil {
 		log.Fatal(err)

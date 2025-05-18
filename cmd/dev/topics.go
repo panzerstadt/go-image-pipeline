@@ -17,7 +17,7 @@ func create_topic() {
 	}
 	defer admin.Close()
 
-	topicName := configs.TestTopic
+	topicName := configs.TopicImageJobs
 	// redundancy for brokers
 	// 2 brokers + replication factor 2 = 2 copies per partition, where
 	// one leader, one follower
@@ -44,7 +44,7 @@ func remove_topic() {
 	}
 	defer admin.Close()
 
-	topicName := configs.TestTopic
+	topicName := configs.TopicImageJobs
 	err = admin.DeleteTopic(topicName)
 	if err != nil {
 		log.Fatalf("Error deleting topic: %v", err)

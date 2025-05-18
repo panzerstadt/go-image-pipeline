@@ -19,10 +19,16 @@ func main() {
 		filenames := scanFolder(configs.InputDir)
 		// 2. loop through all files in folder and prepare message
 		for id, filename := range filenames {
-			msg := prepareMessageForTopic(configs.TestTopic, fmt.Sprintf("%v", id), configs.InputDir, filename)
+			msg := prepareMessageForTopic(configs.TopicImageJobs, fmt.Sprintf("%v", id), configs.InputDir, filename)
 			partition, offset, err := producer.SendMessage(msg)
 			if err != nil {
 				log.Printf("Failed to send message: %v", err)
+				if err.Error() == "kafka server: Request was for a topic or partition that does not exist on this broker" {
+					panic("kafka setup error")
+				}
+				if err.Error() == "circuit breaker is open" {
+					panic("something's wrong with the kafka setup")
+				}
 			} else {
 				fmt.Printf("Message sent to partition %d at offset %d\n", partition, offset)
 			}

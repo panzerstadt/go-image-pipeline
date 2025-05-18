@@ -1,4 +1,4 @@
-package main
+package shared
 
 import (
 	"log"
@@ -8,12 +8,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func receive(msg *sarama.ConsumerMessage) pb.ResizeTask {
+func ReceiveResizeTask(msg *sarama.ConsumerMessage) *pb.ResizeTask {
 	var task pb.ResizeTask
 	err := proto.Unmarshal(msg.Value, &task)
 	if err != nil {
 		log.Fatal("error unmarshaling the protobuf")
 	}
 
-	return task
+	return &task
 }

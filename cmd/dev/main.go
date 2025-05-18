@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/panzerstadt/go-image-pipeline/configs"
 )
 
 type model struct {
@@ -17,10 +19,11 @@ func initialModel() model {
 	return model{
 		choices: []string{
 			"Run Producer",
-			"Run Consumer",
+			"Run Image Processing Consumer",
+			"Reset Image Processing Inputs",
 			"Test Imagemagick",
-			"Create Kafka Topic: 'Test Topic'",
-			"Remove Kafka Topic: 'Test Topic'",
+			fmt.Sprintf("Create Kafka Topic: '%s'", configs.TopicImageJobs),
+			fmt.Sprintf("Remove Kafka Topic: '%s'", configs.TopicImageJobs),
 			"Exit"},
 		cursor: 0,
 	}
@@ -47,18 +50,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.cursor {
 			case 0:
-				runCommand("go", "run", "./cmd/producer")
+				// runCommand("go", "run", "./cmd/producer")
+				runCommand("osascript", "-e", `tell application "Terminal" to do script "cd /Users/tliqun/Documents/Github/go-image-pipeline && go run ./cmd/producer"`)
 			case 1:
 				runCommand("osascript", "-e", `tell application "Terminal" to do script "cd /Users/tliqun/Documents/Github/go-image-pipeline && go run ./cmd/consumer"`)
 			case 2:
+				inputRes := runCommand("find", "./inputs", "-type", "f")
+				inputFiles := strings.Split(strings.TrimSpace(string(inputRes)), "\n")
+				for _, file := range inputFiles {
+					runCommand("rm", "-f", file)
+				}
+				outputRes := runCommand("find", "./outputs", "-type", "f")
+				outputFiles := strings.Split(strings.TrimSpace(string(outputRes)), "\n")
+				for _, file := range outputFiles {
+					out := file
+					in := strings.Replace(file, "/outputs", "/inputs", 1)
+					fmt.Println(out, in)
+					runCommand("cp", out, in)
+					runCommand("rm", "-f", out)
+				}
+			case 3:
 				middlePath := "./intermediate/test.jpg"
 				outPath := "./outputs/test.jpg"
 				runCommand("/opt/homebrew/bin/convert", "-strip", "-interlace", "Plane", "-quality", "80", "-resize", "2000x2000", middlePath, outPath)
-			case 3:
-				create_topic()
 			case 4:
-				remove_topic()
+				create_topic()
 			case 5:
+				remove_topic()
+			case 6:
 				return m, tea.Quit
 			}
 		}
@@ -79,14 +98,16 @@ func (m model) View() string {
 	return s
 }
 
-func runCommand(name string, args ...string) {
+func runCommand(name string, args ...string) []byte {
 	cmd := exec.Command(name, args...)
+	fmt.Println(cmd)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
 	fmt.Printf("%s", output)
 	fmt.Print("\n\n\n\n\n")
+	return output
 }
 
 func main() {
