@@ -17,7 +17,21 @@ func MakeResizeTask(id string, dir string, path string) []byte {
 	}
 	data, err := proto.Marshal(task)
 	if err != nil {
-		log.Fatal("can't open file")
+		log.Fatal("can't reate resize task")
 	}
+	return data
+}
+
+func MakeSyncTask(id string, dir string) []byte {
+	task := &pb.SyncTask{
+		Id:  id,
+		Dir: dir,
+	}
+
+	data, err := proto.Marshal(task)
+	if err != nil {
+		log.Fatal("can't create sync task")
+	}
+
 	return data
 }

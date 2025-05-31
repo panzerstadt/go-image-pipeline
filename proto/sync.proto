@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package image_pipeline;
+option go_package = "./pb";
+
+message SyncTask {
+    string id = 1;
+    string dir = 5;
+}
+
+// protoc --go_out=. proto/sync.proto
